@@ -8,7 +8,7 @@ A pre-boot environment is needed to pass kernel arguments.  It simply loads the 
 
 ## Stage 1: Allocating memory pages
 
-This stage-0 kernel allocates space for various kernel data structures according to kernel arguments.  At the end of this, the kernel will not rely on anything from the pre-boot environment.
+This stage-1 kernel allocates space for various kernel data structures according to kernel arguments.  At the end of this, the kernel will not rely on anything from the pre-boot environment.
 
 1. Determine how many pages to allocate from the end of RAM by reading `XASZ` and adding the total of `MBLK`.
 1. Allocate that number of pages from the end of RAM

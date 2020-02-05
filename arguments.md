@@ -54,6 +54,8 @@ The `PID1` argument describes how to load PID1.  It has the following values:
 
 Note that the .bss and .data sections are combined together.  This merely indicates how pages will get allocated for this new program.  Also note that these sections will be cleared to 0 due to how Xous processes start up.
 
+The bootloader will copy `LOAD_SIZE` bytes of data from `LOAD_OFFSET` to a new series of pages in memory, which will be mapped to `TEXT_OFFSET`.  Additionally, `DATA_SIZE` pages will be allocated at `DATA_OFFSET`, plus a single page at `STACK`.
+
 ### XKRN
 
 This describes the kernel.
