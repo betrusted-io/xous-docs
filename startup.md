@@ -41,8 +41,9 @@ At this point, we don't need to rely on external memory anymore.  There is no MM
 
 At the end of stage 1, the memory allocator is working.
 
-## Stage 2: Loading the kernel and creating the first process
+## Stage 2: Loading the kernel and enabling the MMU
 
+The kernel runs as PID1, with the MMU enabled.
 The first process will eventually get turned into PID1, however at the start we're running without an associated userspace process.  In fact, we're even running without the kernel loaded.
 
 1. Assign pages to the kernel and initial processes
