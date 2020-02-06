@@ -24,13 +24,14 @@ If a process intends to spawn multiple threads, then it must malloc that memory 
 
 ## Special Virtual Memory Addresses
 
-These addresses are statically mapped in virtual memory.  They are only visible in "Supervisor" mode.  However, they are globally mapped, and are available in every process.
+These addresses are statically mapped in virtual memory.  They are only visible in "Supervisor" mode.  However, they are globally mapped, and are available in every process.  Note that the kernel takes up a single 16 MB superpage, so it can be
+assigned to every process simply by mapping superpage 0.
 
 | Address    | Description
 | ---------- | -----------
-| 0x01000000 | Kernel arguments, allocation tables
-| 0x02000000 | Kernel binary image
-| 0x04000000 | Kernel data section
+| 0x00100000 | Kernel arguments, allocation tables
+| 0x00800000 | Kernel binary image
+| 0x00c00000 | Kernel data section
 
 ## Memory Whitelist
 
