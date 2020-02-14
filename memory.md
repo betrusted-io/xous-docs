@@ -3,7 +3,7 @@
 
 Xous assumes a memory-mapped IO system.  Furthermore, it assumes there
 is one section of "general-purpose RAM", and zero or more additional
-memory sections.
+memory sections.  Finally, it assumes there is an MMU.
 
 Memory is divided into "pages" of 4096 bytes, and are allocated based on
 this number.  It is considered an error to request memory that isn't
@@ -32,6 +32,9 @@ assigned to every process simply by mapping superpage 0.
 | 0x00100000 | Kernel arguments, allocation tables
 | 0x00800000 | Kernel binary image
 | 0x00c00000 | Kernel data section
+| 0xdffffffc | Stack pointer
+
+Note that the stack pointer is not necessarily fixed, and may be changed in a later revision.
 
 ## Memory Whitelist
 
@@ -50,19 +53,21 @@ In a system with ample amounts of memory, all valid memory page would get its ow
 
 There are several arguments that specify where kernel structures should go.
 
-### Memory Blocks
+### Extra Memory Regions
 
-The kernel needs to know the range of pages.  This is passed to the kernel
-as a list in the following form:
+If additional memory is available, then it is passed in an `MREx` block.
+This is a list in the following form, with each field being 32 bits of little endian data:
 
 ```
-MBLK,$count,
+MREx,$count,
 $start1,$len1,$name
 $start2,$len2,$name
 ...
 ```
 
-The first memory range that is listed is always RAM, which is the range that will be used for dealing with `sbrk` and unspecified memory allocations.  The name should be printable ASCII, and is primarily used for debugging.
+This does not include system memory, which is passed via XArg.  Instead, this
+is used for additional memory such as framebuffer ranges, IO ranges, or memory-mapped
+SPI flash.  The name should be printable ASCII, and is primarily used for debugging.
 
 ### Kernel Memory
 

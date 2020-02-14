@@ -20,33 +20,44 @@ The size is in little endian byte order, and does not include the 8 bytes descri
 so the `size` field is in 4-byte words.  That is, a tag with four bytes of
 contents would have a `size` of `1`.
 
+The `XArg` block **must** be first.
+
 ## Tag Types
 
 | Tag | Description
 | ---- | ------------
-| XASZ | Xous Args Size.  This indicates the size of the entire block (including the XASZ tag and size), and can be used to determine how many pages to save for this block.  This should be the first argument.
+| XArg | Xous Args.  This indicates the size of the entire block (including the XArg tag and size), as well as the user RAM area, and can be used to determine how many pages to save for this block.  This must be the first argument.
 | BFlg | Bootloader config flags.
-| MBLK | Memory page blocks.  This is a series of offset/size pairs indicating memory regions in the system, as well as a code name for the memory page.  The first region is defined to be "RAM", and is where memory will be allocated from.
-| XKRN | Kernel memory specification.  Includes the offset of the kernel in RAM as well as its size.  Does not need to be page-aligned.
-| Init | Initial program specification.  This includes the offset of PID1 in RAM as well as its size.  Does not need to be page-aligned.  May appear more than once.
+| MREx | Extra memory ranges.  This is a series of offset/size pairs indicating additional memory regions in the system beyond RAM, as well as a code name for the memory page.  It does not include system RAM.
+| XKrn | Kernel source specification.  Includes the offset of the kernel in RAM as well as its size.  Does not need to be page-aligned, unless NO_COPY is 1.
+| Init | Initial program specification.  This includes the offset of PID1 in RAM as well as its size.  Does not need to be page-aligned unless NO_COPY is 1.  May appear more than once.
 
-### XASZ
+### XArg
 
 The overall size of the argument block.  This must come first.  This tag
-has one word of contents, which is the number of words of data.  Therefore,
-a minimum boot tag structure would have an `XASZ` size of 3: One word for the
-tag, one for the crc+size, and one for the contents of the `XASZ` region.
+has four words of contents, which is the number of words of data plus the
+system memory definition.  Therefore,
+a minimum boot tag structure would have an `XArg` size of 5: One word for the
+tag, one for the crc+size, and four for the contents of the `XArg` region.
+
+| Offset | Size | Name | Description
+| ------ | ---- | ---- | -----------
+|    0   |   4  | Arg Size | The size of the entire args structure, including all headers, but excluding any trailing data (such as executables)
+|    4   |   4  | Version   | Version of the XArg structure.  Currently `1`.
+|    8   |   4  | RAM Start | The origin of system RAM, in bytes
+|    12   |   4  | RAM Size  | The size of system RAM, in bytes
+|    16   |   4  | RAM Name  | A printable name for system RAM
 
 ### Bflg
 
 This configures various bootloader flags.
 
 * 0x00000001 `NO_COPY` -- Set this flag to skip copying data to RAM.
-* 0x00000002 `ABSOLUTE` -- If set, all addresses are absolute.  Otherwise, they're relative to the start of the config block.
+* 0x00000002 `ABSOLUTE` -- If set, all program addresses are absolute.  Otherwise, they're relative to the start of the config block.
 
-### MBLK
+### MREx
 
-Define memory block regions.  See [memory.md](memory.md) for more information.
+Extra memory block regions.  See [memory.md](memory.md) for more information.
 
 ### Init
 
@@ -58,13 +69,12 @@ The `Init` argument describes how to load initial processes.  It has the followi
 * DATA_OFFSET -- Virtual memory address where this program expects the .data/.bss section to be
 * DATA_SIZE -- Size of the .data+.bss section
 * ENTRYPOINT - Virtual memory address of the main() function
-* STACK -- 32-bits of stack address, where the program expects `$sp` to point
 
 Note that the .bss and .data sections are combined together.  This merely indicates how pages will get allocated for this new program.  Also note that these sections will be cleared to 0 due to how Xous processes start up.
 
 The bootloader will copy `LOAD_SIZE` bytes of data from `LOAD_OFFSET` to a new series of pages in memory, which will be mapped to `TEXT_OFFSET`.  Additionally, `DATA_SIZE` pages will be allocated at `DATA_OFFSET`, plus a single page at `STACK`.
 
-### XKRN
+### XKrn
 
 This describes the kernel.
 
@@ -74,4 +84,3 @@ This describes the kernel.
 * DATA_OFFSET -- Virtual memory address where the kernel expects the .data/.bss section to be.  This should be `0x00c00000`
 * DATA_SIZE -- Size of the .data+.bss section
 * ENTRYPOINT -- Virtual address of the main() function
-* STACK -- 32-bits of stack address, where the program expects `$sp` to point.  This will be used as the exception stack.
