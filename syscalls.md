@@ -10,14 +10,14 @@ RISC-V specifies eight registers as `argument` registers: `$a0`-`$a7`.  When per
 
 | Register | Usage (Calling) |
 | -------- | -------------- |
-| a0       | Arg 1 |
-| a1       | Arg 2 |
-| a2       | Arg 3 |
-| a3       | Arg 4 |
-| a4       | Arg 5 |
-| a5       | Arg 6 |
-| a6       | Arg 7 |
-| a7       | Syscall Number |
+| a0       | Syscall Number |
+| a1       | Arg 1 |
+| a2       | Arg 2 |
+| a3       | Arg 3 |
+| a4       | Arg 4 |
+| a5       | Arg 5 |
+| a6       | Arg 6 |
+| a7       | Arg 7 |
 
 When returning from the syscall, these registers have the following meaning:
 
