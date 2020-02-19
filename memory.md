@@ -16,15 +16,29 @@ may be specified when allocating memory, in which case they are taken from
 that physical address.  Otherwise, they are pulled from the "general-purpose
 RAM" section.
 
-A process can request specific memory ranges to be allocated.  For example, a `uart_server` might request the UART memory region be allocated so that it can handle that device and provide a service.  This region cannot be re-mapped to another process until it is freed.
+A process can request specific memory ranges to be allocated.  For
+example, a `uart_server` might request the UART memory region be
+allocated so that it can handle that device and provide a service.  This
+region cannot be re-mapped to another process until it is freed.
 
-A process can request more memory for its heap.  This will pull memory from the global pool and add it to that process' `heap_size`.  Processes start out with a `heap_size` of 0, which does not include the contents of the `.text` or `.data` sections.
+A process can request more memory for its heap.  This will pull memory
+from the global pool and add it to that process' `heap_size`.  Processes
+start out with a `heap_size` of 0, which does not include the contents
+of the `.text` or `.data` sections.
 
-If a process intends to spawn multiple threads, then it must malloc that memory prior to creating the thread.
+If a process intends to spawn multiple threads, then it must malloc that
+memory prior to creating the thread.
 
 ## Special Virtual Memory Addresses
 
-These addresses are statically mapped in virtual memory.  They are only visible in "Supervisor" mode.  However, they are globally mapped, and are available in every process.  Note that the kernel takes up a single 4 MB megapage, so it can be
+The first 16 megabytes of memory are reserved for use by the kernel.
+
+The first 4 megabytes are universal across all processes, and represent
+the kernel's address space.  These are owned by the kernel, and are
+available in every process in "Supervisor" mode.  This should prevent
+the need from ever switching back to process 1.
+
+Note that the kernel takes up a single 4 MB megapage, so it can be
 assigned to every process simply by mapping megapage 0.
 
 | Address    | Description
@@ -33,33 +47,54 @@ assigned to every process simply by mapping megapage 0.
 | 0x00200000 | Kernel binary image and data section
 | 0x003ffffc | Kernel stack top
 | 0x00400000 | Page tables
+| 0x00401000 | Context data
 | 0x00800000 | Process-specific data (such as root page table)
-| 0x00c00000 | Start of memory available to processes
+| 0x01000000 | Start of memory available to processes
 | 0xdffffffc | Process stack pointer
 
-Note that the stack pointer is not necessarily fixed, and may be changed in a later revision.
+Note that the stack pointer is not necessarily fixed, and may be changed
+in a later revision.
 
 ## Memory Whitelist
 
-Memory is kept in a whitelist.  That is, when calling `sys_memory_allocate()`, the address is first validated against a list of known ranges.  This has two major benefits:
+Memory is kept in a whitelist.  That is, when calling
+`sys_memory_allocate()`, the address is first validated against a list
+of known ranges.  This has two major benefits:
 
-1. It prevents attacks where memory mirrors can be reused to access another process' memory.  For example, on Litex, the peripheral space is mirrored at both `0x70000000` and `0xe0000000`.  Without special handling, two different processes could map these two spaces and share memory.
-2. We can limit the amount of memory that is needed to keep track of memory.  For example, if we had generic tables that expanded every time an invalid region was accessed, then a process could use up the kernel's memory by simply requesting every possible address.  In having a whitelist, we can statically allocate memory blocks to track memory usage.
+1. It prevents attacks where memory mirrors can be reused to access
+   another process' memory.  For example, on Litex, the peripheral space
+   is mirrored at both `0x70000000` and `0xe0000000`.  Without special
+   handling, two different processes could map these two spaces and
+   share memory.
+2. We can limit the amount of memory that is needed to keep track of
+   memory.  For example, if we had generic tables that expanded every
+   time an invalid region was accessed, then a process could use up the
+   kernel's memory by simply requesting every possible address.  In
+   having a whitelist, we can statically allocate memory blocks to track
+   memory usage.
 
 ## Memory Tables
 
-Each valid memory page has an associated table entry.  This entry simply contains a `XousPid`, to indicate which process the memory block belongs to.  A `XousPid` of `0` is invalid, and indicates the region is free.  A `XousPid` of `1` indicates the page belongs to the kernel.
+Each valid memory page has an associated table entry.  This entry simply
+contains a `XousPid`, to indicate which process the memory block belongs
+to.  A `XousPid` of `0` is invalid, and indicates the region is free.  A
+`XousPid` of `1` indicates the page belongs to the kernel.
 
-In a system with ample amounts of memory, all valid memory page would get its own memory table.  However, in resource-constrained systems, a simple array is not suitable, and so a programmatic lookup table is used instead.
+In a system with ample amounts of memory, all valid memory page would
+get its own memory table.  However, in resource-constrained systems, a
+simple array is not suitable, and so a programmatic lookup table is used
+instead.
 
 ## Kernel Arguments
 
-There are several arguments that specify where kernel structures should go.
+There are several arguments that specify where kernel structures should
+go.
 
 ### Extra Memory Regions
 
 If additional memory is available, then it is passed in an `MREx` block.
-This is a list in the following form, with each field being 32 bits of little endian data:
+This is a list in the following form, with each field being 32 bits of
+little endian data:
 
 ```
 MREx,$count,
@@ -68,9 +103,10 @@ $start2,$len2,$name
 ...
 ```
 
-This does not include system memory, which is passed via XArg.  Instead, this
-is used for additional memory such as framebuffer ranges, IO ranges, or memory-mapped
-SPI flash.  The name should be printable ASCII, and is primarily used for debugging.
+This does not include system memory, which is passed via XArg.  Instead,
+this is used for additional memory such as framebuffer ranges, IO
+ranges, or memory-mapped SPI flash.  The name should be printable ASCII,
+and is primarily used for debugging.
 
 ### Kernel Memory
 
@@ -78,10 +114,11 @@ This structure specifies how kernel memory is laid out.
 
 ## Allocation Tables
 
-Each page of memory has an entry in the allocation tables.  When allocating
-a new page, Xous ensures that page is not currently allocated to another
-process.  This ensures that each page of memory is only assigned to one
-process at a time, unless that page is handed out as shared.
+Each page of memory has an entry in the allocation tables.  When
+allocating a new page, Xous ensures that page is not currently allocated
+to another process.  This ensures that each page of memory is only
+assigned to one process at a time, unless that page is handed out as
+shared.
 
 Allocation tables have the following layout:
 
@@ -108,5 +145,6 @@ struct PageAllocations {
 
 ## Page Tables
 
-Each process requires its own page table.  The kernel will be mapped to a fixed offset in each process, in order to save some RAM and make
+Each process requires its own page table.  The kernel will be mapped to
+a fixed offset in each process, in order to save some RAM and make
 context switches easier.
