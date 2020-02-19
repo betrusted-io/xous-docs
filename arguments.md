@@ -1,6 +1,6 @@
-# Kernel Arguments
+# Xous Arguments
 
-Kernel arguments are passed by giving a page-aligned address pointed to
+Xous arguments are passed by giving a page-aligned address pointed to
 by register `$a0`.  This uses IFF-style tags with the following format:
 
 ```rust
@@ -59,8 +59,7 @@ This configures various bootloader flags.
 
 ### MREx
 
-Extra memory block regions.  See [memory.md](memory.md) for more
-information.
+Extra memory regions.  See [memory.md](memory.md) for more information.
 
 ### Init
 
@@ -75,7 +74,7 @@ following values:
 * DATA_OFFSET -- Virtual memory address where this program expects the
   .data/.bss section to be
 * DATA_SIZE -- Size of the .data+.bss section
-* ENTRYPOINT - Virtual memory address of the main() function
+* ENTRYPOINT - Virtual memory address of the `_start()` function
 
 Note that the .bss and .data sections are combined together.  This
 merely indicates how pages will get allocated for this new program.
@@ -87,17 +86,25 @@ a new series of pages in memory, which will be mapped to `TEXT_OFFSET`.
 Additionally, `DATA_SIZE` pages will be allocated at `DATA_OFFSET`, plus
 a single page at `STACK`.
 
+Init programs **cannot** access the first 4 megabytes, as this memory
+is reserved for the kernel.
+
 ### XKrn
 
-This describes the kernel.
+This describes the kernel image.  This image will get mapped into every
+process within the first 4 megabytes, and therefore must live entirely
+within this space.
 
 * LOAD_OFFSET -- Position in RAM relative to the start of the arguments
   block
 * LOAD_SIZE -- Size (in bytes) of the kernel binary, not including this
   header
 * TEXT_OFFSET -- Virtual memory address where the kernel expects the
-  program image to live.  This should be `0x008000000`
+  program image to live.  This should be `0x002000000`
 * DATA_OFFSET -- Virtual memory address where the kernel expects the
-  .data/.bss section to be.  This should be `0x00c00000`
+  .data/.bss section to be.  This should be above `0x00200000` and below
+  `0x00400000`
 * DATA_SIZE -- Size of the .data+.bss section
-* ENTRYPOINT -- Virtual address of the main() function
+* ENTRYPOINT -- Virtual address of the `_start()` function
+
+The kernel will run in Supervisor mode.
