@@ -47,10 +47,11 @@ assigned to every process simply by mapping megapage 0.
 | 0x00200000 | Kernel binary image and data section
 | 0x003ffffc | Kernel stack top
 | 0x00400000 | Page tables
-| 0x00401000 | Context data
 | 0x00800000 | Process-specific data (such as root page table)
+| 0x00801000 | Context data (registers, etc.)
+| 0x00802000 | Return address from syscalls (never allocated)
 | 0x01000000 | Start of memory available to processes
-| 0xdffffffc | Process stack pointer
+| 0xdffffffc | Process stack top
 
 Note that the stack pointer is not necessarily fixed, and may be changed
 in a later revision.
@@ -107,10 +108,6 @@ This does not include system memory, which is passed via XArg.  Instead,
 this is used for additional memory such as framebuffer ranges, IO
 ranges, or memory-mapped SPI flash.  The name should be printable ASCII,
 and is primarily used for debugging.
-
-### Kernel Memory
-
-This structure specifies how kernel memory is laid out.
 
 ## Allocation Tables
 
