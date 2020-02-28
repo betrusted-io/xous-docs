@@ -51,11 +51,14 @@ crc+size, and four for the contents of the `XArg` region.
 
 ### Bflg
 
-This configures various bootloader flags.
+This configures various bootloader flags.  It consists of a single word
+of data.
 
-* 0x00000001 `NO_COPY` -- Set this flag to skip copying data to RAM.
-* 0x00000002 `ABSOLUTE` -- If set, all program addresses are absolute.
+* 0x00000001 `NO_COPY`  -- Skip copying data to RAM.
+* 0x00000002 `ABSOLUTE` -- All program addresses are absolute.
   Otherwise, they're relative to the start of the config block.
+* 0x00000004 `DEBUG`    -- Allow the kernel to access memory inside user
+  programs, which allows a debugger to run in the kernel.
 
 ### MREx
 
