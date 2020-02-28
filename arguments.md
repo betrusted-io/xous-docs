@@ -5,11 +5,11 @@ by register `$a0`.  This uses IFF-style tags with the following format:
 
 ```rust
 struct Tag {
-    /// Ascii-printable namem, not null-terminated, in little endian format.
+    /// Ascii-printable name, not null-terminated, in little endian format.
     tag: u32,
 
-    /// Reserved for a crc16 in a future version.
-    _reserved: u16,
+    /// CRC16 of the data section, using CCITT polynomial.
+    crc16: u16,
 
     /// Size of the data section, in 4-byte words.
     size: u16,
