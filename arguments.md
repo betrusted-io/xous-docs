@@ -71,12 +71,13 @@ following values:
 
 * LOAD_OFFSET -- Position in RAM relative to the start of the arguments
   block where this program is stored
-* LOAD_SIZE -- Size (in bytes) of the binary, not including this header
 * TEXT_OFFSET -- Virtual memory address where this program expects the
   program image to live
+* TEXT_SIZE -- Size (in bytes) of the text section, not including this header
 * DATA_OFFSET -- Virtual memory address where this program expects the
   .data/.bss section to be
-* DATA_SIZE -- Size of the .data+.bss section
+* DATA_SIZE -- Size of the .data section
+* BSS_SIZE -- Size of the .bss section, assumed to immediately follow .data
 * ENTRYPOINT - Virtual memory address of the `_start()` function
 
 Note that the .bss and .data sections are combined together.  This
@@ -95,19 +96,19 @@ is reserved for the kernel.
 ### XKrn
 
 This describes the kernel image.  This image will get mapped into every
-process within the first 4 megabytes, and therefore must live entirely
-within this space.
+process within the final 4 megabytes, and therefore the text and data
+offsets must be in the range `0xffc0_0000` - `0xfff0_0000`.
 
-* LOAD_OFFSET -- Position in RAM relative to the start of the arguments
-  block
-* LOAD_SIZE -- Size (in bytes) of the kernel binary, not including this
-  header
+* LOAD_OFFSET -- Physical address (or offset) where the kernel is stored
 * TEXT_OFFSET -- Virtual memory address where the kernel expects the
-  program image to live.  This should be `0x002000000`
+  program image to live.  This should be `0xffd00000`
+* TEXT_SIZE -- Size of the text section.  This indicates how many bytes
+  to copy from the boot image.
 * DATA_OFFSET -- Virtual memory address where the kernel expects the
-  .data/.bss section to be.  This should be above `0x00200000` and below
-  `0x00400000`
-* DATA_SIZE -- Size of the .data+.bss section
+  .data/.bss section to be.  This should be above `0xffd00000` and below
+  `0xffe00000`
+* DATA_SIZE -- Size of the .data section
+* BSS_SIZE -- The size of the .bss section, which immediately follows .data
 * ENTRYPOINT -- Virtual address of the `_start()` function
 
-The kernel will run in Supervisor mode.
+The kernel will run in Supervisor mode, and have its own private stack.

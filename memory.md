@@ -31,27 +31,33 @@ memory prior to creating the thread.
 
 ## Special Virtual Memory Addresses
 
-The first 16 megabytes of memory are reserved for use by the kernel.
+The last 16 megabytes of memory are reserved for use by the kernel.
 
-The first 4 megabytes are universal across all processes, and represent
+Many of these pages are kernel bookkeeping on a per-process basis.  For
+example, a process' pagetables are always mapped at `0xff400000`.
+
+The last 4 megabytes are universal across all processes, and represent
 the kernel's address space.  These are owned by the kernel, and are
 available in every process in "Supervisor" mode.  This should prevent
 the need from ever switching back to process 1.
 
 Note that the kernel takes up a single 4 MB megapage, so it can be
-assigned to every process simply by mapping megapage 0.
+assigned to every process simply by mapping megapage 1023 (`0xffc00000`).
 
 | Address    | Description
 | ---------- | -----------
-| 0x00100000 | Kernel arguments, allocation tables
-| 0x00200000 | Kernel binary image and data section
-| 0x003ffffc | Kernel stack top
-| 0x00400000 | Page tables
-| 0x00800000 | Process-specific data (such as root page table)
-| 0x00801000 | Context data (registers, etc.)
-| 0x00802000 | Return address from syscalls (never allocated)
-| 0x01000000 | Start of memory available to processes
+     0x10000
+| 0x00100000 | Default entrypoint for riscv64-unknown-elf-ld (as shown by `riscv64-unknown-elf-ld --verbose`)
 | 0xdffffffc | Process stack top
+| 0xff000000 | End of memory available to processes
+| 0xff400000 | Page tables
+| 0xff800000 | Process-specific data (such as root page table)
+| 0xff801000 | Context data (registers, etc.)
+| 0xff802000 | Return address from syscalls (never allocated)
+| 0xffc00000 | Kernel arguments, allocation tables
+| 0xffd00000 | Kernel binary image and data section
+| 0xffeffffc | Kernel stack top
+| 0xfff00000 | {unused}
 
 Note that the stack pointer is not necessarily fixed, and may be changed
 in a later revision.
