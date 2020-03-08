@@ -41,11 +41,11 @@ the system memory definition.  Therefore, a minimum boot tag structure
 would have an `XArg` size of 5: One word for the tag, one for the
 crc+size, and four for the contents of the `XArg` region.
 
-| Offset | Size | Name | Description
-| ------ | ---- | ---- | -----------
-|    0   |   4  | Arg Size | The size of the entire args structure, including all headers, but excluding any trailing data (such as executables)
-|    4   |   4  | Version   | Version of the XArg structure.  Currently `1`.
-|    8   |   4  | RAM Start | The origin of system RAM, in bytes
+| Offset  | Size | Name      | Description
+| ------- | ---- | --------- | -----------
+|    0    |   4  | Arg Size  | The size of the entire args structure, including all headers, but excluding any trailing data (such as executables)
+|    4    |   4  | Version   | Version of the XArg structure.  Currently `1`.
+|    8    |   4  | RAM Start | The origin of system RAM, in bytes
 |    12   |   4  | RAM Size  | The size of system RAM, in bytes
 |    16   |   4  | RAM Name  | A printable name for system RAM
 
