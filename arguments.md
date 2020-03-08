@@ -31,7 +31,7 @@ The `XArg` block **must** be first.
 | BFlg | Bootloader config flags.
 | MREx | Extra memory ranges.  This is a series of offset/size pairs indicating additional memory regions in the system beyond RAM, as well as a code name for the memory page.  It does not include system RAM.
 | XKrn | Kernel source specification.  Includes the offset of the kernel in RAM as well as its size.  Does not need to be page-aligned, unless NO_COPY is 1.
-| Init | Initial program specification.  This includes the offset of PID1 in RAM as well as its size.  Does not need to be page-aligned unless NO_COPY is 1.  May appear more than once.
+| IniE | Initial program specification, based on a degenerate ELF header.  This includes the load offset of the binary, as well as the size of each section.  Does not need to be page-aligned unless NO_COPY is 1.  May appear more than once, for each of the initial processes.
 
 ### XArg
 
@@ -64,33 +64,43 @@ of data.
 
 Extra memory regions.  See [memory.md](memory.md) for more information.
 
-### Init
+### IniE
 
-The `Init` argument describes how to load initial processes.  It has the
+The `IniE` argument describes how to load initial processes.  It has the
 following values:
 
 * LOAD_OFFSET -- Position in RAM relative to the start of the arguments
-  block where this program is stored
-* TEXT_OFFSET -- Virtual memory address where this program expects the
-  program image to live
-* TEXT_SIZE -- Size (in bytes) of the text section, not including this header
-* DATA_OFFSET -- Virtual memory address where this program expects the
-  .data/.bss section to be
-* DATA_SIZE -- Size of the .data section
-* BSS_SIZE -- Size of the .bss section, assumed to immediately follow .data
+  block where this program is stored, or an absolute value if `ABSOLUTE`
+  is `1`.
 * ENTRYPOINT - Virtual memory address of the `_start()` function
+* SECTION1_OFFSET -- Virtual memory address of the first memory section
+* SECTION1_SIZE -- Size of the first memory section
+* SECTION1_FLAGS -- Flags describing the first memory section
+* SECTION2_OFFSET -- Virtual memory address of the second memory section
+* SECTION2_SIZE -- Size of the second memory section
+* SECTION2_FLAGS -- Flags describing the second memory section
+* ...
+* SECTIONn_OFFSET -- Virtual memory address of the `nth` memory section
+* SECTIONn_SIZE -- Size of the `nth` memory section
+* SECTIONn_FLAGS -- Flags describing the `nth` memory section
 
-Note that the .bss and .data sections are combined together.  This
-merely indicates how pages will get allocated for this new program.
-Also note that these sections will be cleared to 0 due to how Xous
-processes start up.
+The fields `size`, `flags`, and `offset` occupy 64 bits (8 bytes). The
+`OFFSET` is a full 32-bit address.  The `SIZE` field is in units of
+words, however as it is only 24 bits, meaning the largest section size
+is `2^26` bytes.
 
-The bootloader will copy `LOAD_SIZE` bytes of data from `LOAD_OFFSET` to
-a new series of pages in memory, which will be mapped to `TEXT_OFFSET`.
-Additionally, `DATA_SIZE` pages will be allocated at `DATA_OFFSET`, plus
-a single page at `STACK`.
+The `FLAGS` field contains the following four bits.  Any region may be
+marked NOCOPY, however RISC-V does not allow regions to be marked
+"Write-only":
 
-Init programs **cannot** access the first 4 megabytes, as this memory
+|  Bit   |  Binary   |    Name    | Description
+| ------ | --------- | ---------- | ---------------------------------------------
+|    0   |   0b0001  | NOCOPY     | No data should be copied -- useful for `.bss`
+|    1   |   0b0010  | WRITABLE   | Region will be allocated with the "W" bit
+|    2   |   0b0100  | READABLE   | Region will be allocated with the "R" bit
+|    3   |   0b1000  | EXECUTABLE | Region will be allocated with the "X" bit
+
+Programs **cannot** access the final four megabytes, as this memory
 is reserved for the kernel.
 
 ### XKrn

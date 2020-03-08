@@ -48,7 +48,7 @@ assigned to every process simply by mapping megapage 1023 (`0xffc00000`).
 | ---------- | -----------
      0x10000
 | 0x00100000 | Default entrypoint for riscv64-unknown-elf-ld (as shown by `riscv64-unknown-elf-ld --verbose`)
-| 0xdffffffc | Process stack top
+| 0x80000000 | Process stack top
 | 0xff000000 | End of memory available to processes
 | 0xff400000 | Page tables
 | 0xff800000 | Process-specific data (such as root page table)
@@ -56,7 +56,7 @@ assigned to every process simply by mapping megapage 1023 (`0xffc00000`).
 | 0xff802000 | Return address from syscalls (never allocated)
 | 0xffc00000 | Kernel arguments, allocation tables
 | 0xffd00000 | Kernel binary image and data section
-| 0xffeffffc | Kernel stack top
+| 0xffff0000 | Kernel stack top
 | 0xfff00000 | {unused}
 
 Note that the stack pointer is not necessarily fixed, and may be changed
